@@ -1,19 +1,28 @@
 package com.example.dam.ztts;
 
 import android.content.Intent;
+import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.View;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.EditText;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.Toast;
+
+import com.example.dam.ztts.bot.ChatterBot;
+import com.example.dam.ztts.bot.ChatterBotFactory;
+import com.example.dam.ztts.bot.ChatterBotSession;
+import com.example.dam.ztts.bot.ChatterBotType;
 
 import java.util.ArrayList;
 import java.util.Locale;
@@ -21,8 +30,8 @@ import java.util.Locale;
 public class MainActivity extends AppCompatActivity implements TextToSpeech.OnInitListener {
 
     private TextToSpeech tts;
-    private EditText et;
-    private TextView tv;
+    private ScrollView sv;
+    private LinearLayout lv;
     private boolean ok;
 
     @Override
@@ -36,8 +45,8 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                escribir();
+
             }
         });
         init();
@@ -66,11 +75,17 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     }
 
     @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        tts.shutdown();
+    }
+
+    @Override
     public void onInit(int status) {
-        if(status == TextToSpeech.SUCCESS){
+        if (status == TextToSpeech.SUCCESS) {
             //se puede reproducir
             ok = true;
-        } else{
+        } else {
             //no se puede reproducir
             ok = false;
         }
@@ -79,81 +94,122 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode== 0) {
-            if(resultCode== TextToSpeech.Engine.CHECK_VOICE_DATA_PASS) {
-                tts= new TextToSpeech(this, this);
+        if (requestCode == 0) {
+            if (resultCode == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS) {
+                tts = new TextToSpeech(this, this);
                 tts.setLanguage(Locale.getDefault());
-            } else{
-                Intent intent= new Intent();
+            } else {
+                Intent intent = new Intent();
                 intent.setAction(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA);
                 startActivity(intent);
             }
         }
-        if(requestCode== 1) {
+        if (requestCode == 1) {
             ArrayList<String> textos = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
-            tv.setText(textos.get(0));
-            for (String s : textos) {
-                tv.append(s+"\n");
+            String texto = textos.get(0);
+            /*--- Añadir textView ---*/
+            TextView tv = new TextView(this);
+            tv.setText(texto);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+            params.gravity = Gravity.RIGHT;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                tv.setBackground(getDrawable(R.drawable.shapetv));
             }
+            lv.addView(tv,params);
+            /*--- Añadir textView ---*/
+            Respuesta r = new Respuesta();
+            r.execute(texto);
         }
     }
 
-    public void init(){
-        et = (EditText) findViewById(R.id.editText);
-        tv = (TextView) findViewById(R.id.textView);
-        Intent intent= new Intent();
+    public void init() {
+        Intent intent = new Intent();
+        sv = (ScrollView) findViewById(R.id.sv);
+        lv = (LinearLayout) findViewById(R.id.lv);
+
         intent.setAction(TextToSpeech.Engine.ACTION_CHECK_TTS_DATA);
         startActivityForResult(intent, 0);
 
     }
 
-    public void leer(View v){
-        if(ok) {
-            tts.setLanguage(Locale.CHINA);
-            tts.setPitch((float) 1.0);
-            tts.speak(et.getText().toString(), TextToSpeech.QUEUE_FLUSH, null);
-            Toast.makeText(this, "Se puede", Toast.LENGTH_SHORT).show();
-        } else {
-            Toast.makeText(this, "No se puede", Toast.LENGTH_SHORT).show();
-        }
-    }
-    public void leer1(View v){
-        if(ok) {
+
+
+    public void leer(String a) {
+        if (ok) {
             tts.setLanguage(new Locale("es", "ES"));
-            tts.setPitch((float) 100.0);
-            tts.speak(et.getText().toString(), TextToSpeech.QUEUE_FLUSH, null);
-            Toast.makeText(this, "Se puede", Toast.LENGTH_SHORT).show();
-        } else {
-            Toast.makeText(this, "No se puede", Toast.LENGTH_SHORT).show();
-        }
-    }
-    public void leer2(View v){
-        if(ok) {
-            tts.setLanguage(new Locale("es", "ES"));
-            tts.setPitch((float) 50.0);
-            tts.speak(et.getText().toString(), TextToSpeech.QUEUE_FLUSH, null);
-            Toast.makeText(this, "Se puede", Toast.LENGTH_SHORT).show();
-        } else {
-            Toast.makeText(this, "No se puede", Toast.LENGTH_SHORT).show();
-        }
-    }
-    public void leer3(View v){
-        if(ok) {
-            tts.setLanguage(Locale.UK);
             tts.setPitch((float) 1.0);
-            tts.speak(et.getText().toString(), TextToSpeech.QUEUE_FLUSH, null);
-            Toast.makeText(this, "Se puede", Toast.LENGTH_SHORT).show();
-        } else {
-            Toast.makeText(this, "No se puede", Toast.LENGTH_SHORT).show();
+            tts.speak(a, TextToSpeech.QUEUE_FLUSH, null);
         }
     }
 
-    public void escribir(View v){
-        Intent i = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        i.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, "es-ES");
-        i.putExtra(RecognizerIntent.EXTRA_PROMPT,"Habla ahora");
-        i.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS,3000);
-        startActivityForResult(i, 1);
+    public void escribir() {
+        Escritura e = new Escritura();
+        e.execute();
     }
 
+    public class Escritura extends AsyncTask<String, Integer, String> {
+
+        @Override
+        protected String doInBackground(String... params) {
+            Intent i = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            i.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, "es-ES");
+            i.putExtra(RecognizerIntent.EXTRA_PROMPT, "Habla ahora");
+            i.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 2000);
+            startActivityForResult(i, 1);
+            return null;
+        }
+
+    }
+
+    public class Respuesta extends AsyncTask<String, Integer, String> {
+
+        @Override
+        protected String doInBackground(String... params) {
+            ChatterBotFactory factory = new ChatterBotFactory();
+
+            ChatterBot bot1;
+            try {
+                bot1 = factory.create(ChatterBotType.CLEVERBOT);
+                ChatterBotSession bot1session = bot1.createSession();
+                String s = params[0];
+                Log.v("CHAT", "background: " + s);
+                return bot1session.think(s);
+            } catch (Exception e) {
+                Log.v("CHAT", "excepcion: " + e.getMessage());
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String out) {
+            TextView tv = new TextView(MainActivity.this);
+            out = corregirCaracteres(out);  
+            leer(out);
+            tv.setText(out);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+            params.gravity = Gravity.LEFT;
+            params.bottomMargin = 5;
+            params.topMargin = 5;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                tv.setBackground(getDrawable(R.drawable.shapetv));
+            }
+            lv.addView(tv,params);
+        }
+    }
+
+    public String corregirCaracteres(String s) {
+        s.replace("&aacute;", "a");
+        s.replace("&eacute;", "e");
+        s.replace("&iacute;", "i");
+        s.replace("&oacute;", "o");
+        s.replace("&uacute;", "u");
+        s.replace("&ntilde;", "ñ");
+        return s;
+    }
 }

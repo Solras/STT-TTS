@@ -11,48 +11,21 @@
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="com.example.dam.ztts.MainActivity"
     tools:showIn="@layout/activity_main"
-    android:orientation="vertical"
-    >
+    android:orientation="vertical">
 
-    <EditText
+
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/editText" />
+        android:layout_height="match_parent"
+        android:id="@+id/sv"
+        android:fillViewport="false" >
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="New Button0"
-        android:id="@+id/button1"
-        android:onClick="leer"/>
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="New Button1"
-        android:id="@+id/button3"
-        android:onClick="leer1"/>
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="New Button2"
-        android:id="@+id/button4"
-        android:onClick="leer2"/>
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="New Button5"
-        android:id="@+id/button5"
-        android:onClick="leer3"/>
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="New Button"
-        android:id="@+id/button2"
-        android:onClick="escribir"/>
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/lv">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="New Text"
-        android:id="@+id/textView" />
+        </LinearLayout>
+    </ScrollView>
 </LinearLayout>
